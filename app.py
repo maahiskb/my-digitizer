@@ -20,23 +20,14 @@ COMPONENT_HTML = """
     <span class="digitizer-hint" id="hint"></span>
     <span class="digitizer-size" id="size"></span>
   </div>
-  <div class="digitizer-viewport" id="viewport">
-    <canvas id="plot"></canvas>
-    <div class="digitizer-lens" id="lens" hidden>
-      <canvas id="lens-canvas" width="174" height="174"></canvas>
-      <div class="digitizer-lens-label" id="lens-label"></div>
-    </div>
-  </div>
+  <div class="digitizer-viewport" id="viewport"><canvas id="plot"></canvas></div>
 </div>
 """
 COMPONENT_CSS = """
 .digitizer-shell { font-family: var(--st-font, sans-serif); }
 .digitizer-toolbar { display:flex; justify-content:space-between; gap:1rem; padding:0.6rem 0.8rem; color:var(--st-text-color); background:var(--st-secondary-background-color); border:1px solid var(--st-border-color); border-bottom:0; border-radius:0.7rem 0.7rem 0 0; font-size:0.85rem; }
-.digitizer-viewport { height:580px; overflow:auto; position:relative; border:1px solid var(--st-border-color); border-radius:0 0 0.7rem 0.7rem; background-color:#e9ecef; background-image:linear-gradient(45deg,#dfe3e7 25%,transparent 25%),linear-gradient(-45deg,#dfe3e7 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#dfe3e7 75%),linear-gradient(-45deg,transparent 75%,#dfe3e7 75%); background-size:20px 20px; background-position:0 0,0 10px,10px -10px,-10px 0; }
+.digitizer-viewport { height:580px; overflow:auto; border:1px solid var(--st-border-color); border-radius:0 0 0.7rem 0.7rem; background-color:#e9ecef; background-image:linear-gradient(45deg,#dfe3e7 25%,transparent 25%),linear-gradient(-45deg,#dfe3e7 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#dfe3e7 75%),linear-gradient(-45deg,transparent 75%,#dfe3e7 75%); background-size:20px 20px; background-position:0 0,0 10px,10px -10px,-10px 0; }
 canvas { display:block; max-width:none; cursor:crosshair; }
-.digitizer-lens { position:absolute; z-index:2; width:174px; height:198px; box-sizing:border-box; padding:5px; border:1px solid #344054; border-radius:10px; background:#fff; box-shadow:0 5px 20px #0005; pointer-events:none; }
-.digitizer-lens canvas { width:162px; height:162px; border-radius:5px; cursor:default; }
-.digitizer-lens-label { color:#344054; font:11px/22px sans-serif; text-align:center; white-space:nowrap; }
 """
 COMPONENT_JS = """
 export default function(component) {
@@ -45,12 +36,8 @@ export default function(component) {
   const viewport = parentElement.querySelector('#viewport');
   const hint = parentElement.querySelector('#hint');
   const size = parentElement.querySelector('#size');
-  const lens = parentElement.querySelector('#lens');
-  const lensCanvas = parentElement.querySelector('#lens-canvas');
-  const lensLabel = parentElement.querySelector('#lens-label');
-  if (!canvas || !viewport || !lens || !lensCanvas) return;
+  if (!canvas || !viewport) return;
   const ctx = canvas.getContext('2d');
-  const lensCtx = lensCanvas.getContext('2d');
   const img = new Image();
   img.onload = () => {
     canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
@@ -72,31 +59,7 @@ export default function(component) {
     size.textContent = `${img.naturalWidth} × ${img.naturalHeight}px`;
   };
   img.src = data.image;
-  hint.textContent = `${data.hint || 'Click the image to add a point'} · Hover for a 3× magnifier`;
-  canvas.onmouseenter = () => { lens.hidden = false; };
-  canvas.onmouseleave = () => { lens.hidden = true; };
-  canvas.onmousemove = (event) => {
-    if (!img.complete || !img.naturalWidth) return;
-    const rect = canvas.getBoundingClientRect();
-    const viewportRect = viewport.getBoundingClientRect();
-    const nx = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
-    const ny = Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height));
-    const lensWidth = 174, lensHeight = 198, gap = 14;
-    let left = event.clientX - viewportRect.left + viewport.scrollLeft + gap;
-    let top = event.clientY - viewportRect.top + viewport.scrollTop + gap;
-    if (left + lensWidth > viewport.scrollLeft + viewport.clientWidth) left -= lensWidth + gap * 2;
-    if (top + lensHeight > viewport.scrollTop + viewport.clientHeight) top -= lensHeight + gap * 2;
-    lens.style.left = `${Math.max(viewport.scrollLeft, left)}px`;
-    lens.style.top = `${Math.max(viewport.scrollTop, top)}px`;
-    const sourceSize = 162 / (data.zoom * 3);
-    const sx = Math.max(0, Math.min(img.naturalWidth - sourceSize, nx * img.naturalWidth - sourceSize / 2));
-    const sy = Math.max(0, Math.min(img.naturalHeight - sourceSize, ny * img.naturalHeight - sourceSize / 2));
-    lensCtx.clearRect(0, 0, lensCanvas.width, lensCanvas.height);
-    lensCtx.drawImage(img, sx, sy, sourceSize, sourceSize, 0, 0, lensCanvas.width, lensCanvas.height);
-    lensCtx.strokeStyle = '#e4572e'; lensCtx.lineWidth = 1;
-    lensCtx.beginPath(); lensCtx.moveTo(87, 68); lensCtx.lineTo(87, 106); lensCtx.moveTo(68, 87); lensCtx.lineTo(106, 87); lensCtx.stroke();
-    if (lensLabel) lensLabel.textContent = `x ${nx.toFixed(4)}  ·  y ${ny.toFixed(4)}`;
-  };
+  hint.textContent = data.hint || 'Click the image to add a point';
   canvas.onclick = (event) => {
     const rect = canvas.getBoundingClientRect();
     const x = (event.clientX - rect.left) / rect.width;
