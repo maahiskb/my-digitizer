@@ -85,6 +85,17 @@ def fresh_dataset(index: int) -> dict[str, Any]:
     return {"name": f"Dataset {index}", "color": PALETTE[(index - 1) % len(PALETTE)], "points": []}
 
 
+def add_dataset_callback() -> None:
+    st.session_state.datasets.append(fresh_dataset(len(st.session_state.datasets) + 1))
+    st.session_state.active_dataset = len(st.session_state.datasets) - 1
+
+
+def delete_active_dataset_callback() -> None:
+    selected_index = st.session_state.active_dataset
+    st.session_state.datasets.pop(selected_index)
+    st.session_state.active_dataset = max(0, selected_index - 1)
+
+
 def calibrated_value(point: dict[str, float], calibration: dict[str, Any], log_x: bool, log_y: bool) -> tuple[float, float]:
     ox, oy = calibration["origin"]
     xx, xy = calibration["xpoint"]
@@ -215,14 +226,14 @@ if uploaded is not None:
             active["name"] = st.text_input("Dataset name", value=active["name"], key=f"dataset_name_{selected}")
             active["color"] = st.color_picker("Point color", value=active["color"], key=f"dataset_color_{selected}")
             ds_cols = st.columns(2)
-            if ds_cols[0].button("Add dataset", icon=":material/add:", width="stretch"):
-                st.session_state.datasets.append(fresh_dataset(len(st.session_state.datasets) + 1))
-                st.session_state.active_dataset = len(st.session_state.datasets) - 1
-                st.rerun()
-            if ds_cols[1].button("Delete", icon=":material/delete:", width="stretch", disabled=len(st.session_state.datasets) == 1):
-                st.session_state.datasets.pop(selected)
-                st.session_state.active_dataset = max(0, selected - 1)
-                st.rerun()
+            ds_cols[0].button("Add dataset", icon=":material/add:", width="stretch", on_click=add_dataset_callback)
+            ds_cols[1].button(
+                "Delete",
+                icon=":material/delete:",
+                width="stretch",
+                disabled=len(st.session_state.datasets) == 1,
+                on_click=delete_active_dataset_callback,
+            )
             if st.button("Undo last point", icon=":material/undo:", width="stretch", disabled=not active["points"]):
                 active["points"].pop()
                 st.rerun()
