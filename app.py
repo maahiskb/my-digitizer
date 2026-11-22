@@ -97,9 +97,9 @@ def delete_active_dataset_callback() -> None:
 
 
 def calibrated_value(point: dict[str, float], calibration: dict[str, Any], log_x: bool, log_y: bool) -> tuple[float, float]:
-    ox, oy = calibration["origin"]
-    xx, xy = calibration["xpoint"]
-    yx, yy = calibration["ypoint"]
+    ox, oy = calibration["origin"]["x"], calibration["origin"]["y"]
+    xx, xy = calibration["xpoint"]["x"], calibration["xpoint"]["y"]
+    yx, yy = calibration["ypoint"]["x"], calibration["ypoint"]["y"]
     dx, dy = point["x"] - ox, point["y"] - oy
     ax, ay = xx - ox, xy - oy
     bx, by = yx - ox, yy - oy
@@ -124,9 +124,9 @@ def calibrated_value(point: dict[str, float], calibration: dict[str, Any], log_x
 
 
 def image_position(x: float, y: float, calibration: dict[str, Any], log_x: bool, log_y: bool) -> dict[str, float]:
-    ox, oy = calibration["origin"]
-    xx, xy = calibration["xpoint"]
-    yx, yy = calibration["ypoint"]
+    ox, oy = calibration["origin"]["x"], calibration["origin"]["y"]
+    xx, xy = calibration["xpoint"]["x"], calibration["xpoint"]["y"]
+    yx, yy = calibration["ypoint"]["x"], calibration["ypoint"]["y"]
     x0, xv, y0, yv = calibration["values"]
     if log_x:
         x0, xv = math.log10(x0), math.log10(xv)
